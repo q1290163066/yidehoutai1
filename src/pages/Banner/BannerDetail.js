@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import{Card,Form,Input,Upload, message,Space,Button } from 'antd'
+import{Card,Form,Input,Upload, message,Button } from 'antd'
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+
 
 // 表单
 // 文本框占的宽度
@@ -11,10 +12,8 @@ const layout = {
 const tailLayout = {
   wrapperCol: { offset: 8, span: 16 },
 };
-// 提交表单且数据验证成功后回调事件
-const onFinish = values => {
-  console.log('Success:', values);
-};
+
+
 // 提交表单且数据验证失败后回调事件
 const onFinishFailed = errorInfo => {
   console.log('Failed:', errorInfo);
@@ -41,29 +40,28 @@ function beforeUpload(file) {
 }
 
 export default class Detail extends Component{
-  constructor(){
+  constructor(props){
     super()
     this.state={
+      loading:false,
       form:{
-        title:'1',
-        type:'1',
-        status:'1',
-        platform:'1',
-        positionCode:'1',
-        targetUrl:'1',
+        title:'',
+        type:'',
+        status:'',
+        platform:'',
+        positionCode:'',
+        targetUrl:'',
         resourcePath:''
       }
     }
+   
   }
   componentWillMount(){
-    this.$axios({
-      url:this.$api.banner.get_one+"1275378457898909696"
-     }).then(res=>{
-       console.log(res.data.data)
-       this.setState({
-         form:res.data.data
-       })
-     })
+    if(this.props.location.state){
+      this.setState({
+        form:(this.props.location.state)
+      })
+    }
   }
   handleChange = info => {
     if (info.file.status === 'uploading') {
@@ -75,41 +73,72 @@ export default class Detail extends Component{
       getBase64(info.file.originFileObj, resourcePath =>
         this.setState({
           form:{
-            resourcePath
+            resourcePath:info.file.response.data.fileDownloadUri
           },
           loading: false,
-        }),
+        })
       );
     }
   }
+  // 提交表单且数据验证成功后回调事件
+  onFinish(values){
+    // console.log(this)
+    // console.log('Success:', values.resourcePath.file.response.data.fileDownloadUri);
+    
+    if(this.props.location.state){
+      if(values.resourcePath){
+        values.resourcePath =values.resourcePath.file.response.data.fileDownloadUri
+      }else{
+        values.resourcePath =this.props.location.state.resourcePath
+      }
+      console.log(values)
+      values.id=this.props.location.state.id
+      let url=this.$api.banner.update
+      this.$axios.put(url,values)
+      .then(res=>{
+        if((res.data.msg)==="成功"){
+          alert(res.data.msg)
+          this.props.history.go(-1)
+        }
+      })
+    }else{
+      let url=this.$api.banner.add
+      values.resourcePath =values.resourcePath.file.response.data.fileDownloadUri
+      console.log(values)
+      this.$axios.post(url,values)
+      .then(res=>{
+        if((res.data.msg)==="成功"){
+          alert(res.data.msg)
+          this.props.history.go(-1)
+        }
+      })
+      // console.log(values)
+    }
+   
+  }
   render(){
-    const title=(
-      <span>
-        商品详情
-      </span>
-    )
     const uploadButton = (
       <div>
         {this.state.loading ? <LoadingOutlined /> : <PlusOutlined />}
         <div className="ant-upload-text">选择图片</div>
       </div>
-    );
-    const imageUrl  = this.state.form.resourcePath;
-
+    )
+    const  product= this.state.form
     return(
-      <Card title={title}>
+      <Card >
+        
         <Form
           {...layout}
           name="basic"
-          initialValues={{ remember: true }}
-          onFinish={onFinish}
+          onFinish={this.onFinish.bind(this)}
           onFinishFailed={onFinishFailed}
         >
           <Form.Item
             label="标题"
             name="title"
+            initialValue={product.title}
           >
-            <Input defaultValue={this.state.form.title}/>
+            <Input />
           </Form.Item>
 
           <Form.Item
@@ -117,53 +146,58 @@ export default class Detail extends Component{
             name="resourcePath"
           >
             <Upload
-              name="小米"
+              name="file"
               listType="picture-card"
               className="avatar-uploader"
               showUploadList={false}
-              action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+              action= {this.$api.upload}
               beforeUpload={beforeUpload}
               onChange={this.handleChange}
             >
-              {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
+              {product.resourcePath ? <img src={product.resourcePath} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
             </Upload>
           </Form.Item>
           <Form.Item
             label="平台"
             name="platform"
+            initialValue={product.platform}
           >
-            <Input defaultValue={this.state.form.platform}/>
+            <Input placeholde="miniapp"/>
           </Form.Item>
           <Form.Item
             label="广告位置"
             name="positionCode"
+            initialValue={product.positionCode}
           >
-            <Input defaultValue={this.state.form.positionCode}/>
+            <Input placeholder="请填写index-banner"/>
           </Form.Item>
           <Form.Item
             label="目标地址"
             name="targetUrl"
+            initialValue={product.targetUrl}
           >
-          <Input defaultValue={this.state.form.targetUrl}/>
+          <Input />
           </Form.Item>
           <Form.Item
             label="类型"
             name="type"
+            initialValue={product.type}
           >
-            <Input defaultValue={this.state.form.type}/>
+            <Input placeholder="请填写1"/>
           </Form.Item>
           <Form.Item
             label="状态"
             name="status"
+            initialValue={product.status}
           >
-            <Input defaultValue={this.state.form.status}/>
+            <Input placeholder="请填写1"/>
           </Form.Item>
 
           <Form.Item {...tailLayout}>
             <Button type="primary" htmlType="submit">
             提交
             </Button>
-            <Button type="primary" style={{'marginLeft':'20px'}}>
+            <Button type="primary" style={{'marginLeft':'20px'}} onClick={()=>this.props.history.go(-1)}>
             返回
             </Button>
           </Form.Item>

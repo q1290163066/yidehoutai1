@@ -2,9 +2,9 @@ import React, { Component } from 'react'
 
 import { Route, Switch,Link,Redirect } from 'react-router-dom'
 import Houses from '../Houses/Houses'
+import HousesDetail from '../Houses/HousesDetail'
 import Banner from '../Banner/Banner'
-import AddUpdate from '../Houses/add-update'
-import Detail from '../Houses/detail'
+import BannerDetail from '../Banner/BannerDetail'
 
 import './Index.styl'
 import { Layout, Menu } from 'antd';
@@ -80,9 +80,9 @@ class Index extends Component {
                         
                         <Switch>
                             <Route path="/index/houses" exact component={Houses} />
-                            <Route path='/index/houses/detail' exact component={Detail} />
-                            <Route path='/index/houses/addUpdate' exact component={AddUpdate} />
+                            <Route path="/index/houses/detail" exact component={HousesDetail} />
                             <Route path="/index/banner" exact component={Banner} />
+                            <Route path='/index/banner/detail' exact component={BannerDetail} />
                             <Redirect to={"/index/houses"} />
                         </Switch>
                     </Content>
