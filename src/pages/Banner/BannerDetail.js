@@ -125,7 +125,7 @@ export default class Detail extends Component{
     )
     const  product= this.state.form
     return(
-      <Card >
+      <Card style={{padding:'40px'}}>
         
         <Form
           {...layout}

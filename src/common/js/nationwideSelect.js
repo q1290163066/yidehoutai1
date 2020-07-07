@@ -1384,6 +1384,8 @@ export default class AddReceive extends React.Component {
 
                     county:this.getCounty(this.state.province, e)[0]
 
+                },function(){
+                    this.props.fn(this.state.city)
                 });
 
                 break;
@@ -1394,8 +1396,6 @@ export default class AddReceive extends React.Component {
 
                     county: e
 
-                },function(){
-                    this.props.fn(this.state.county)
                 });
                 
                 break;
@@ -1437,13 +1437,13 @@ export default class AddReceive extends React.Component {
                     ))}
                 </Select>
 
-                <Select defaultValue="地区" style={{ width: 120 }} onChange={this.handleChange.bind(this, "county")}>
+                {/* <Select defaultValue="地区" style={{ width: 120 }} onChange={this.handleChange.bind(this, "county")}>
                     {this.state.counties.map(county => (
 
                         <Option value={county} key={id++}>{county}</Option>
 
                     ))}
-                </Select>
+                </Select> */}
             </div>
 
         )

@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 
 import NationwideSelect from '../../common/js/nationwideSelect'
-import{Card,Form,Input,Button,Upload,message,Tag, Divider } from 'antd'
+import{Card,Form,Input,Button,Upload,message,Tag } from 'antd'
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import Gmap from '../../common/js/Gmap'
 
 
 // 表单
@@ -38,6 +39,7 @@ function beforeUpload(file) {
   }
   return isJpgOrPng && isLt2M;
 }
+let arr=[]
 
 export default class Detail extends Component{
   constructor(props){
@@ -50,10 +52,12 @@ export default class Detail extends Component{
         name:'',
         masterImg:'',
         address:'',
-        city:''
+        city:'',
+        tags:''
       },
       salePrice:'',
-      tag:<Tag color="green" closable='true'>green</Tag>
+      tag:[],
+      location:''
     }
    
   }
@@ -64,9 +68,16 @@ export default class Detail extends Component{
   onFinish(values){
     let obj=values
     obj.city=this.state.city
-    obj.masterImg=values.masterImg.file.response.data.fileDownloadUri
+    obj.tags=this.state.tag
+    obj.location=this.state.location
+    if(values.masterImg) obj.masterImg=values.masterImg.file.response.data.fileDownloadUri
+    
     console.log(obj)
-    console.log(window.event.nativeEvent)
+    let url=this.$api.housesInfo.add
+    this.$axios.post(url,obj)
+    .then(res=>{
+      console.log(res)
+    })
    
   }
   fn(val){
@@ -80,7 +91,6 @@ export default class Detail extends Component{
       return;
     }
     if (info.file.status === 'done') {
-      // Get this url from response in real world.
       getBase64(info.file.originFileObj, resourcePath =>
         this.setState({
           form:{
@@ -92,18 +102,31 @@ export default class Detail extends Component{
     }
   }
   addTag(){
-    let salePrice=this.state.salePrice
-    let tag=this.state.tag
-    let tags=<Tag color="green" closable='true'>{salePrice}</Tag>+tag
-    this.setState({
-      tag:tags
-    })
+    if(this.state.salePrice){
+      let salePrice=this.state.salePrice
+      arr.push(salePrice)
+      this.setState({
+        salePrice:'',
+        tag:arr
+      })
+    }
   }
   change(e){
     this.setState({
       salePrice:e.target.value
     })
   }
+  fn1(val){
+    let arr=[]
+    let longitude=val.lnglat.lat
+    let latitude=val.lnglat.lng
+    arr.push(longitude)
+    arr.push(latitude)
+    this.setState({
+      location:String(arr)
+    })
+  }
+
   render(){
     const uploadButton = (
       <div>
@@ -114,7 +137,7 @@ export default class Detail extends Component{
     const  product= this.state.form
     return(
       
-      <Card >
+      <Card  style={{padding:'40px'}}>
         
         <Form
           {...layout}
@@ -147,17 +170,24 @@ export default class Detail extends Component{
           </Form.Item>
           
           <Form.Item
+            label="楼盘所属城市"
+            name="city"
+          >
+            <NationwideSelect fn={this.fn.bind(this)}></NationwideSelect>
+          </Form.Item>
+          
+          <Form.Item
             label="楼盘详细地址"
             name="address"
           >
             <Input />
           </Form.Item>
-
+    
           <Form.Item
-            label="楼盘所属城市"
-            name="city"
+            label="楼盘定位"
+            name="location"
           >
-            <NationwideSelect fn={this.fn.bind(this)}></NationwideSelect>
+            <Gmap fn1={this.fn1.bind(this)}></Gmap>
           </Form.Item>
 
           <Form.Item
@@ -173,16 +203,66 @@ export default class Detail extends Component{
           >
             <Input value={this.state.salePrice} onChange={this.change.bind(this)} />
             <Button type="primary" onClick={this.addTag.bind(this)}>添加标签</Button>
-             <div id='tag'>{this.state.tag} </div>
+            <div>
+              {
+                this.state.tag.map((item,index)=>{
+                  return (<Tag color="green" closable='true' key={index}>{item}</Tag>)
+                })
+              }
+            </div>
+          </Form.Item>
+
+          <Form.Item
+            label="佣金比例"
+            name="commissionRisen"
+          >
+            <Input placeholder="例如:5.6"/>%
+          </Form.Item>
+
+          <Form.Item
+            label="佣金规则描述"
+            name="commissionRule"
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="邀约奖励"
+            name="inviteReward"
+          >
+            <Input placeholder="例如:5.6"/>%
+          </Form.Item>
+          
+          <Form.Item
+            label="邀约奖励描述"
+            name="inviteRewardRule"
+          >
+            <Input />
+          </Form.Item>
+          
+          <Form.Item
+            label="优惠信息"
+            name="discountInfo"
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="联系电话"
+            name="telephone"
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="楼盘状态"
+            name="status"
+          >
+            <Input placeholder="1:正常,2:未发布,3:删除" />
           </Form.Item>
 
           <Form.Item {...tailLayout}>
-            <Button type="primary" htmlType="submit">
-            提交
-            </Button>
-            <Button type="primary" style={{'marginLeft':'20px'}} onClick={()=>this.props.history.go(-1)}>
-            返回
-            </Button>
+            <Button type="primary" htmlType="submit">提交</Button>
+            <Button type="primary" style={{'marginLeft':'20px'}} onClick={()=>this.props.history.go(-1)}>返回</Button>
           </Form.Item>
         </Form>
       </Card>

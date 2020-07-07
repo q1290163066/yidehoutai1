@@ -9,7 +9,14 @@ let banner={
 // 上传文件
 let upload="/sys/file/upload"
 
+// 楼盘基本信息
+let housesInfo={
+    add:'/estate/add',
+    get_all:"/estate/list"
+}
+
 export default {
     banner,
-    upload
+    upload,
+    housesInfo
 }
