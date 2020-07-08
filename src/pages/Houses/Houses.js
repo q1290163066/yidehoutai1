@@ -1,11 +1,12 @@
 import React, { Component } from 'react'
 import './Houses.styl'
-import { Card,Button,Form,Input,Table,Tag,DatePicker } from 'antd'
+import { Card,Button,Form,Input,Table,Tag,DatePicker,Dropdown,Menu,Space } from 'antd'
+import { DownOutlined,UserOutlined } from '@ant-design/icons';
 
 
 // 文本框占的宽度
 const layout = {
-  labelCol: { span: 1 },
+  labelCol: { span: 2},
   wrapperCol: { span: 5 },
 };
 const tailLayout = {
@@ -15,44 +16,88 @@ const tailLayout = {
 const onFinishFailed = errorInfo => {
   console.log('Failed:', errorInfo);
 };
-const onChange=(val)=>{
-  console.log(val)
-}
+
+
+// function handleButtonClick(e) {
+//   message.info('Click on left button.');
+//   console.log('click left button', e);
+// }
+
+
 
 export default class Houses extends Component{
 
+
+  handleGetMenuClick(e) {
+    // console.log('click', e);
+    this.setState({
+      status:e.key,
+      select:e.item.props.children[1]
+    })
+  }
+  modificationMenuClick(e){
+    console.log(e)
+    // console.log(this)
+  }
+  // onChange=(val)=>{
+  //   // console.log(utils.formatTime(new Date(val)))
+  //   this.setState({
+  //     time:utils.formatTime(new Date(val))
+  //   })
+  // }
   onFinish(values){
-    // let obj=values
-    // obj.city=this.state.city
-    // obj.tags=this.state.tag
-    // obj.location=this.state.location
-    // if(values.masterImg) obj.masterImg=values.masterImg.file.response.data.fileDownloadUri
-    
+    let obj=values
+    obj.status=this.state.status
+    // obj.time=this.state.time
     // console.log(obj)
-    // let url=this.$api.housesInfo.add
-    // this.$axios.post(url,obj)
-    // .then(res=>{
-    //   console.log(res)
-    // })
-   console.log(values)
+    this.$axios({
+      url:this.$api.housesInfo.get_all,
+      params:obj
+    }) .then(res=>{
+      // console.log(res.data.data.list)
+      this.setState({
+        products:res.data.data.list
+      })
+    })
   }
 
   constructor(){
     super()
     this.state={
-      products:[]//数组
+      products:[],//数组
+      status:'',
+      time:'',
+      select:"请选择"
     }
+  }
+  modification(){
+    this.setState({
+      show:"block"
+    })
   }
   componentWillMount(){
     this.initColumns()
     this.$axios.get(this.$api.housesInfo.get_all)
     .then(res=>{
-      console.log(res.data.data.list)
+      // console.log(res.data.data.list)
       this.setState({
         products:res.data.data.list
       })
     })
-
+    this.getMenu = (
+      <Menu onClick={this.handleGetMenuClick.bind(this)}>
+        <Menu.Item key="NORMAL">正常</Menu.Item>
+        <Menu.Item key="WAIT_RELEASE" >待发布</Menu.Item>
+        <Menu.Item key="DELETED">已删除 </Menu.Item>
+      </Menu>
+    );
+    this.modificationMenu=(
+      <Menu onClick={this.modificationMenuClick.bind(this)}>
+      <Menu.Item key="NORMAL">正常</Menu.Item>
+      <Menu.Item key="WAIT_RELEASE" >待发布</Menu.Item>
+      <Menu.Item key="DELETED">已删除 </Menu.Item>
+    </Menu>
+    )
   }
   status(status){
     if(status==="NORMAL"){
@@ -77,6 +122,7 @@ export default class Houses extends Component{
         title: '名称',
         dataIndex: 'name',
         key: 'name',
+        width:150
       },
       {
         title: '城市',
@@ -87,6 +133,7 @@ export default class Houses extends Component{
         title: '地址',
         dataIndex: 'address',
         key: 'address',
+        width:150
       },
       
       {
@@ -98,6 +145,7 @@ export default class Houses extends Component{
         title: '标签',
         dataIndex: 'tags',
         key: 'tags',
+        width:150,
         render:(tags) => (
               <div>
                 {
@@ -120,13 +168,15 @@ export default class Houses extends Component{
       },
       {
         title: '状态',
-        dataIndex: 'status',
         key: 'status',
+        dataIndex: 'status',
         render:(status) => (
-              <div>
-                {
-                     this.status(status)
-                }
+              <div style={{textAlign:"center"}}>
+                 <Dropdown overlay={this.modificationMenu}>
+                  <Button>
+                    {this.status(status)}<DownOutlined />
+                  </Button>
+                </Dropdown>
               </div>
         )   
       },
@@ -140,6 +190,17 @@ export default class Houses extends Component{
         title: '操作时间',
         dataIndex: 'updateTime',
         key: 'updateTime',
+      },
+      {
+        title: '操作',
+        width:150,
+        render:(product) => (
+          <Space size="middle">
+            <Button type="link"  onClick={()=>this.props.history.push('houses/detail',product.id)} style={{width:'20px'}}>详情</Button>
+            <Button type="link" style={{width:'20px'}}>编辑</Button>
+            <Button type="link"  style={{width:'20px'}}>删除</Button>
+          </Space>
+        )
       }
      
     
@@ -153,13 +214,13 @@ export default class Houses extends Component{
   render(){
     const {products}=this.state
     const extra=(
-      <Button type='promary' onClick={()=>this.props.history.push('houses/detail')}>
+      <Button type='promary' onClick={()=>this.props.history.push('houses/add')}>
         添加
       </Button>
     )
     const title=(
       <Form
-      {...layout}
+      layout="inline"
       name="basic"
       onFinish={this.onFinish.bind(this)}
       onFinishFailed={onFinishFailed}
@@ -171,23 +232,28 @@ export default class Houses extends Component{
         <Input />
       </Form.Item>
       <Form.Item
-        label="状态"
-        name="status"
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item
         label="城市"
         name="city"
       >
         <Input />
       </Form.Item>
       <Form.Item
-        label="开始时间"
-        name="name"
+        label="状态"
+        name="status"
       >
-        <DatePicker onChange={onChange} />
+          <Dropdown overlay={this.getMenu}>
+            <Button>
+              {this.state.select} <DownOutlined />
+            </Button>
+          </Dropdown>
       </Form.Item>
+
+      {/* <Form.Item
+        label="开始时间"
+        name="startTime"
+      >
+        <DatePicker onChange={this.onChange.bind(this)} />
+      </Form.Item> */}
 
 
       <Form.Item {...tailLayout}>

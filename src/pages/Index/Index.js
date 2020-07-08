@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 
 import { Route, Switch,Link,Redirect } from 'react-router-dom'
 import Houses from '../Houses/Houses'
+import HousesAdd from '../Houses/HousesAdd'
 import HousesDetail from '../Houses/HousesDetail'
 import Banner from '../Banner/Banner'
 import BannerDetail from '../Banner/BannerDetail'
@@ -75,11 +76,13 @@ class Index extends Component {
                         margin: '24px 16px',
                         padding: 24,
                         minHeight: 280,
+                        overflow:"scroll"
                         }}
                     >
                         
                         <Switch>
                             <Route path="/index/houses" exact component={Houses} />
+                            <Route path="/index/houses/add" exact component={HousesAdd} />
                             <Route path="/index/houses/detail" exact component={HousesDetail} />
                             <Route path="/index/banner" exact component={Banner} />
                             <Route path='/index/banner/detail' exact component={BannerDetail} />

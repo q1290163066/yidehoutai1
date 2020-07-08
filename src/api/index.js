@@ -12,7 +12,8 @@ let upload="/sys/file/upload"
 // 楼盘基本信息
 let housesInfo={
     add:'/estate/add',
-    get_all:"/estate/list"
+    get_all:"/estate/list",
+    details:'/estate/'
 }
 
 export default {

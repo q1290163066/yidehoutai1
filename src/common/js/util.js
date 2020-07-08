@@ -18,7 +18,7 @@ const formatTime = date => {
   const day = date.getDate()
   const hour = date.getHours()
   const minute = date.getMinutes()
-  return [year, month, day].map(formatNumber).join('/') + ' ' + [hour, minute].map(formatNumber).join(':')
+  return [year, month, day].map(formatNumber).join('-') + ' ' + [hour, minute].map(formatNumber).join(':')
 }
 //格式化日期
 const formatDate=(date,joinicon='-')=>{

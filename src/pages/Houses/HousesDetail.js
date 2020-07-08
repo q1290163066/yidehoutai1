@@ -1,271 +1,148 @@
 import React, { Component } from 'react'
-
-import NationwideSelect from '../../common/js/nationwideSelect'
-import{Card,Form,Input,Button,Upload,message,Tag } from 'antd'
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
-import Gmap from '../../common/js/Gmap'
+import { List , Divider,Tag ,Table, Card } from 'antd';
+const { Column, ColumnGroup } = Table;
 
 
-// 表单
-// 文本框占的宽度
-const layout = {
-  labelCol: { span: 4 },
-  wrapperCol: { span: 20 },
-};
-const tailLayout = {
-  wrapperCol: { offset: 8, span: 16 },
-};
-
-// 提交表单且数据验证失败后回调事件
-const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
-};
-// 上传
-function getBase64(img, callback) {
-  const reader = new FileReader();
-  reader.addEventListener('load', () => callback(reader.result));
-  reader.readAsDataURL(img);
-}
-
-// 详情
-function beforeUpload(file) {
-  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-  if (!isJpgOrPng) {
-    message.error('You can only upload JPG/PNG file!');
-  }
-  const isLt2M = file.size / 1024 / 1024 < 2;
-  if (!isLt2M) {
-    message.error('Image must smaller than 2MB!');
-  }
-  return isJpgOrPng && isLt2M;
-}
-let arr=[]
-
-export default class Detail extends Component{
-  constructor(props){
+const dataa = [
+  {
+    key: '1',
+    firstName: 'John',
+    lastName: 'Brown',
+    age: 32,
+    address: 'New York No. 1 Lake Park',
+    tags: ['nice', 'developer'],
+  },
+  {
+    key: '2',
+    firstName: 'Jim',
+    lastName: 'Green',
+    age: 42,
+    address: 'London No. 1 Lake Park',
+    tags: ['loser'],
+  },
+  {
+    key: '3',
+    firstName: 'Joe',
+    lastName: 'Black',
+    age: 32,
+    address: 'Sidney No. 1 Lake Park',
+    tags: ['cool', 'teacher'],
+  },
+];
+export default class HousesDetail extends Component{
+  constructor(){
     super()
-    console.log(props)
     this.state={
-      loading:false,
-      city:'',
-      form:{
-        name:'',
-        masterImg:'',
-        address:'',
-        city:'',
-        tags:''
-      },
-      salePrice:'',
-      tag:[],
-      location:''
+      list:{}
     }
-   
   }
   componentWillMount(){
-   
-  }
-  // 提交表单且数据验证成功后回调事件
-  onFinish(values){
-    let obj=values
-    obj.city=this.state.city
-    obj.tags=this.state.tag
-    obj.location=this.state.location
-    if(values.masterImg) obj.masterImg=values.masterImg.file.response.data.fileDownloadUri
-    
-    console.log(obj)
-    let url=this.$api.housesInfo.add
-    this.$axios.post(url,obj)
+    let id =(this.props.history.location.state)
+    console.log(id)
+    let url=this.$api.housesInfo.details+id
+    this.$axios.get(url)
     .then(res=>{
-      console.log(res)
-    })
-   
-  }
-  fn(val){
-    this.setState({
-      city:val
-    })
-  }
-  handleChange = info => {
-    if (info.file.status === 'uploading') {
-      this.setState({ loading: true });
-      return;
-    }
-    if (info.file.status === 'done') {
-      getBase64(info.file.originFileObj, resourcePath =>
-        this.setState({
-          form:{
-            resourcePath:info.file.response.data.fileDownloadUri
-          },
-          loading: false,
-        })
-      );
-    }
-  }
-  addTag(){
-    if(this.state.salePrice){
-      let salePrice=this.state.salePrice
-      arr.push(salePrice)
+      // console.log(res.data.data)
       this.setState({
-        salePrice:'',
-        tag:arr
+        list:res.data.data
       })
-    }
-  }
-  change(e){
-    this.setState({
-      salePrice:e.target.value
     })
   }
-  fn1(val){
-    let arr=[]
-    let longitude=val.lnglat.lat
-    let latitude=val.lnglat.lng
-    arr.push(longitude)
-    arr.push(latitude)
-    this.setState({
-      location:String(arr)
-    })
-  }
-
   render(){
-    const uploadButton = (
-      <div>
-        {this.state.loading ? <LoadingOutlined /> : <PlusOutlined />}
-        <div className="ant-upload-text">选择图片</div>
-      </div>
-    )
-    const  product= this.state.form
+    let data=(this.state.list)
+    let projectInfo=new Object(data.projectInfo)
     return(
       
-      <Card  style={{padding:'40px'}}>
-        
-        <Form
-          {...layout}
-          name="basic"
-          onFinish={this.onFinish.bind(this)}
-          onFinishFailed={onFinishFailed}
-        >
-          <Form.Item
-            label="楼盘名称"
-            name="name"
-          >
-            <Input />
-          </Form.Item>
+        <div style={{paddingLeft:"100px"}}>
+          <Card title="基本信息" bordered={true}>
+            <List>楼盘ID ： {data.id}</List>
+            <List>楼盘名称 ：  {data.name} </List>
+            <List>楼盘城市： {data.city} </List>
+            <List>楼盘地址： {data.address} </List>
+            <List>楼盘定位 ：  {data.location} </List>
+            <List>优惠信息：  {data.discountInfo}</List>
+            <List>佣金规则： {data.commissionRule}</List>
+            <List>邀约奖励 ： {data.inviteRewardRule}</List>  
+            <List>售价 ：  {data.salePrice} </List>
+            <List
+              style={{display:"flex"}}
+              header={<div>楼盘标签 ： </div>}
+              dataSource={data.tags}
+              renderItem={item => (
+                  <Tag color="green" style={{marginTop:"12px"}}>{item}</Tag>
+              )}
+          /> 
+            <List>联系电话 ：  {data.telephone}</List>
+          </Card>
+          <Card title="详情页滚动相册" bordered={true}>
+            <List
+              dataSource={data.photoImageList}
+              renderItem={item => (
+                  <img src={item} style={{width:"150px",height:"75px"}} alt="无法显示" />
+              )}
+            /> 
+          </Card>
+          <Card title="楼盘主推户型" bordered={true}>
+            <Table dataSource={data.estateHousingList}>
+                <Column title="标题" dataIndex="title" key="title" />
+                <Column title="户型面积" dataIndex="area" key="area" />
+                <Column title="楼层" dataIndex="floors" key="floors" />
+                <Column title="户型图" dataIndex="housingImg" key="housingImg" 
+                  render={housingImg=>(
+                    <img src={housingImg} style={{width:"150px",height:"75px"}} alt="无法显示" />
+                  )}
+                />
+                <Column title="户型" dataIndex="housingType" key="housingType" />
+                <Column title="户型介绍：" dataIndex="housingIntroduction" key="housingIntroduction" />
+                <Column title="是否是主打户型" dataIndex="mainHousing" key="mainHousing"
+                  render={mainHousing=>(
+                    mainHousing?"是":"否"
+                  )}
+                />
+            </Table>
+          </Card>
+          <Card title="楼盘相册" bordered={true}>
+            <List
+              dataSource={data.photosList}
+              renderItem={item => (
+                  <div>
+                    <div>{item.title}</div>
+                    <img src={item} style={{width:"150px",height:"75px"}} alt="无法显示" />
+                  </div>
+              )}
+            /> 
+          </Card>
+          <Card title="项目资料" bordered={true}>
+            <List>开盘日期 ：  {projectInfo.openDate} </List>
+            <List>交房日期 ：  {projectInfo.deliverDate} </List>
+            <List>产品类型 ：  {projectInfo.type} </List>
+            <List>产权 ：  {projectInfo.property} </List>
+            <List>物业公司 ：  {projectInfo.propertyCompany} </List>
+            <List>买卖面积区间 ：  {projectInfo.areaInterval} </List>
+            <List>户型区间 ：  {projectInfo.housingInterval} </List>
+            <List>项目介绍 ：  {projectInfo.projectIntroduce} </List>
+            <List>项目配套 ：  {projectInfo.projectMatching} </List>
+            <List>项目商业 ：  {projectInfo.projectBusiness} </List>
+          </Card>
 
-          <Form.Item
-            label="楼盘主图"
-            name="masterImg"
-          >
-            <Upload
-              name="file"
-              listType="picture-card"
-              className="avatar-uploader"
-              showUploadList={false}
-              action= {this.$api.upload}
-              beforeUpload={beforeUpload}
-              onChange={this.handleChange}
-            >
-              {product.resourcePath ? <img src={product.resourcePath} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
-            </Upload>
-          </Form.Item>
+          {/* <Table dataSource={data.projectInfo}  title={() => '项目资料 ：'}>
+              <Column title="开盘日期" dataIndex="openDate" key="openDate" />
+              <Column title="交房日期" dataIndex="deliverDate" key="deliverDate" />
+              <Column title="产品类型" dataIndex="type" key="type" />
+              <Column title="产权" dataIndex="property" key="property" />
+              <Column title="物业公司" dataIndex="propertyCompany" key="propertyCompany" />
+              <Column title="买卖面积区间" dataIndex="areaInterval" key="areaInterval"/>
+              <Column title="户型区间" dataIndex="housingInterval" key="housingInterval"/>
+              <Column title="项目介绍" dataIndex="projectIntroduce" key="projectIntroduce"/>
+              <Column title="项目配套" dataIndex="projectMatching" key="projectMatching"/>
+              <Column title="项目商业" dataIndex="projectBusiness" key="projectBusiness"/>
+          </Table> */}
+
+      
+         
           
-          <Form.Item
-            label="楼盘所属城市"
-            name="city"
-          >
-            <NationwideSelect fn={this.fn.bind(this)}></NationwideSelect>
-          </Form.Item>
-          
-          <Form.Item
-            label="楼盘详细地址"
-            name="address"
-          >
-            <Input />
-          </Form.Item>
-    
-          <Form.Item
-            label="楼盘定位"
-            name="location"
-          >
-            <Gmap fn1={this.fn1.bind(this)}></Gmap>
-          </Form.Item>
-
-          <Form.Item
-            label="销售价格"
-            name="salePrice"
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="楼盘标签"
-            name="salePrice"
-          >
-            <Input value={this.state.salePrice} onChange={this.change.bind(this)} />
-            <Button type="primary" onClick={this.addTag.bind(this)}>添加标签</Button>
-            <div>
-              {
-                this.state.tag.map((item,index)=>{
-                  return (<Tag color="green" closable='true' key={index}>{item}</Tag>)
-                })
-              }
-            </div>
-          </Form.Item>
-
-          <Form.Item
-            label="佣金比例"
-            name="commissionRisen"
-          >
-            <Input placeholder="例如:5.6"/>%
-          </Form.Item>
-
-          <Form.Item
-            label="佣金规则描述"
-            name="commissionRule"
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="邀约奖励"
-            name="inviteReward"
-          >
-            <Input placeholder="例如:5.6"/>%
-          </Form.Item>
-          
-          <Form.Item
-            label="邀约奖励描述"
-            name="inviteRewardRule"
-          >
-            <Input />
-          </Form.Item>
-          
-          <Form.Item
-            label="优惠信息"
-            name="discountInfo"
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="联系电话"
-            name="telephone"
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="楼盘状态"
-            name="status"
-          >
-            <Input placeholder="1:正常,2:未发布,3:删除" />
-          </Form.Item>
-
-          <Form.Item {...tailLayout}>
-            <Button type="primary" htmlType="submit">提交</Button>
-            <Button type="primary" style={{'marginLeft':'20px'}} onClick={()=>this.props.history.go(-1)}>返回</Button>
-          </Form.Item>
-        </Form>
-      </Card>
+         
+        </div>
     )
   }
 }
