@@ -260,7 +260,7 @@ export default class Houses extends Component{
     ];
   }
   skip(page, pageSize){
-    let url=this.$api.housesInfo.get_all+"?page.page="+page+"&page.size=1"
+    let url=this.$api.housesInfo.get_all+"?page.page="+page+"&page.size=10"
     // let obj={
     //   "page.page":this.state.page,
     //   "page.size":"1"
@@ -277,7 +277,7 @@ export default class Houses extends Component{
   }
   render(){
     const {products}=this.state
-    console.log(this.state.list)
+    // console.log(this.state.list)
     const {selectedRowKeys } = this.state;
     const rowSelection = {
       selectedRowKeys,
