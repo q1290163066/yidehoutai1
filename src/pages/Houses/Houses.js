@@ -1,29 +1,29 @@
 import React, { Component } from 'react'
 import './Houses.styl'
-import { Card,Button,Form,Input,Table,Tag,DatePicker,Dropdown,Menu,Space } from 'antd'
-import { DownOutlined,UserOutlined } from '@ant-design/icons';
-
+import { Card,Button,Form,Input,Table,Tag,message,Dropdown,Menu,Space,Pagination } from 'antd'
+import { DownOutlined } from '@ant-design/icons';
+// 楼盘基本信息列表
 
 // 文本框占的宽度
-const layout = {
-  labelCol: { span: 2},
-  wrapperCol: { span: 5 },
-};
+
 const tailLayout = {
   wrapperCol: { offset: 1, span: 5 },
 };
 // 提交表单且数据验证失败后回调事件
 const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
+  // console.log('Failed:', errorInfo);
 };
 
 
-// function handleButtonClick(e) {
-//   message.info('Click on left button.');
-//   console.log('click left button', e);
-// }
-
-
+const data = [];
+for (let i = 0; i < 46; i++) {
+  data.push({
+    key: i,
+    name: `Edward King ${i}`,
+    age: 32,
+    address: `London, Park Lane no. ${i}`,
+  });
+}
 
 export default class Houses extends Component{
 
@@ -35,21 +35,55 @@ export default class Houses extends Component{
       select:e.item.props.children[1]
     })
   }
-  modificationMenuClick(e){
-    console.log(e)
-    // console.log(this)
+  batchGetMenuClick(e) {
+    let status=e.key
+    let arr=this.state.selectedRowKeys
+    let url=this.$api.housesInfo.all_status+"?ids="+arr+"&status="+status
+    this.$axios.patch(url)
+    .then(res=>{
+      if(res.data.msg==="成功"){
+        let list=this.state.products
+        list.forEach(item=>{
+          arr.forEach(items=>{
+            if(item.id===items){
+              item.status=status
+              this.setState({
+                products:list
+              })
+            
+            }
+          })
+        })
+        message.success("修改"+res.data.msg);
+      }else{
+        message.error('修改失败');
+      }
+    })
   }
-  // onChange=(val)=>{
-  //   // console.log(utils.formatTime(new Date(val)))
-  //   this.setState({
-  //     time:utils.formatTime(new Date(val))
-  //   })
-  // }
+  modificationMenuClick(e){
+    // console.log(e.key)
+    let status=e.key
+    let obj=this.state.record
+    let id=obj.id
+    let url=this.$api.housesInfo.compileOne+id+"?status="+status
+    this.$axios.patch(url)
+    .then(res=>{
+      if(res.data.msg==="成功"){
+        // console.log(res)
+        obj.status=e.key
+        this.setState({
+          record:obj
+        })
+        message.success("修改"+res.data.msg);
+      }else{
+        message.error('修改失败');
+      }
+    })
+  }
+
   onFinish(values){
     let obj=values
     obj.status=this.state.status
-    // obj.time=this.state.time
-    // console.log(obj)
     this.$axios({
       url:this.$api.housesInfo.get_all,
       params:obj
@@ -67,21 +101,37 @@ export default class Houses extends Component{
       products:[],//数组
       status:'',
       time:'',
-      select:"请选择"
+      select:"请选择",
+      record:'',
+      selectedRowKeys: [],
+      batch:"批量修改状态",
+      list:{},
+      page:"1"
     }
   }
-  modification(){
-    this.setState({
-      show:"block"
-    })
-  }
+  start = () => {
+    // ajax request after empty completing
+    setTimeout(() => {
+      this.setState({
+        selectedRowKeys: []
+      });
+    }, 1000);
+  };
+  onSelectChange = selectedRowKeys => {
+    // console.log('selectedRowKeys changed: ', selectedRowKeys);
+    this.setState({ selectedRowKeys });
+  };
   componentWillMount(){
     this.initColumns()
-    this.$axios.get(this.$api.housesInfo.get_all)
+    // console.log(this.state.page)
+    let url=this.$api.housesInfo.get_all+"?page.page="+this.state.page+"&page.size=10"
+    this.$axios.get(url)
     .then(res=>{
-      // console.log(res.data.data.list)
+      let list=res.data.data ||[]
+      // console.log(list)
       this.setState({
-        products:res.data.data.list
+        products:list.list,
+        list:res.data.data
       })
     })
     this.getMenu = (
@@ -93,6 +143,13 @@ export default class Houses extends Component{
     );
     this.modificationMenu=(
       <Menu onClick={this.modificationMenuClick.bind(this)}>
+      <Menu.Item key="NORMAL">正常</Menu.Item>
+      <Menu.Item key="WAIT_RELEASE" >待发布</Menu.Item>
+      <Menu.Item key="DELETED">已删除 </Menu.Item>
+    </Menu>
+    )
+    this.batchMenu=(
+      <Menu onClick={this.batchGetMenuClick.bind(this)}>
       <Menu.Item key="NORMAL">正常</Menu.Item>
       <Menu.Item key="WAIT_RELEASE" >待发布</Menu.Item>
       <Menu.Item key="DELETED">已删除 </Menu.Item>
@@ -129,33 +186,33 @@ export default class Houses extends Component{
         dataIndex: 'city',
         key: 'city',
       },
-      {
-        title: '地址',
-        dataIndex: 'address',
-        key: 'address',
-        width:150
-      },
+      // {
+      //   title: '地址',
+      //   dataIndex: 'address',
+      //   key: 'address',
+      //   width:150
+      // },
       
       {
         title: '售价',
         dataIndex: 'salePrice',
         key: 'salePrice',
       },
-      {
-        title: '标签',
-        dataIndex: 'tags',
-        key: 'tags',
-        width:150,
-        render:(tags) => (
-              <div>
-                {
-                  tags.map((item,index)=>{
-                      return (<Tag color="green" key={index} style={{marginTop:"5px"}}>{item}</Tag>)
-                  })
-                }
-              </div>
-        )   
-      },
+      // {
+      //   title: '标签',
+      //   dataIndex: 'tags',
+      //   key: 'tags',
+      //   width:150,
+      //   render:(tags) => (
+      //         <div>
+      //           {
+      //             tags.map((item,index)=>{
+      //                 return (<Tag color="green" key={index} style={{marginTop:"5px"}}>{item}</Tag>)
+      //             })
+      //           }
+      //         </div>
+      //   )   
+      // },
       {
         title: '联系电话',
         dataIndex: 'telephone',
@@ -172,7 +229,7 @@ export default class Houses extends Component{
         dataIndex: 'status',
         render:(status) => (
               <div style={{textAlign:"center"}}>
-                 <Dropdown overlay={this.modificationMenu}>
+                 <Dropdown overlay={this.modificationMenu} trigger={['click']}>
                   <Button>
                     {this.status(status)}<DownOutlined />
                   </Button>
@@ -180,11 +237,11 @@ export default class Houses extends Component{
               </div>
         )   
       },
-      {
-        title: '操作人',
-        dataIndex: 'operationUserName',
-        key: 'operationUserName',
-      },
+      // {
+      //   title: '操作人',
+      //   dataIndex: 'operationUserName',
+      //   key: 'operationUserName',
+      // },
     
       {
         title: '操作时间',
@@ -196,25 +253,38 @@ export default class Houses extends Component{
         width:150,
         render:(product) => (
           <Space size="middle">
-            <Button type="link"  onClick={()=>this.props.history.push('houses/detail',product.id)} style={{width:'20px'}}>详情</Button>
-            <Button type="link" style={{width:'20px'}}>编辑</Button>
-            <Button type="link"  style={{width:'20px'}}>删除</Button>
+            <Button type="link"  onClick={()=>this.props.history.push('/index/houses/detail',product.id)} style={{width:'20px'}}>详情/编辑</Button>
           </Space>
         )
       }
-     
-    
-    
-     
-     
-    
-
     ];
+  }
+  skip(page, pageSize){
+    let url=this.$api.housesInfo.get_all+"?page.page="+page+"&page.size=1"
+    // let obj={
+    //   "page.page":this.state.page,
+    //   "page.size":"1"
+    // }
+    this.$axios.get(url)
+    .then(res=>{
+      let list=res.data.data ||[]
+      // console.log(list)
+      this.setState({
+        products:list.list,
+        page:page
+      })
+    })
   }
   render(){
     const {products}=this.state
+    console.log(this.state.list)
+    const {selectedRowKeys } = this.state;
+    const rowSelection = {
+      selectedRowKeys,
+      onChange: this.onSelectChange,
+    };
     const extra=(
-      <Button type='promary' onClick={()=>this.props.history.push('houses/add')}>
+      <Button type='primary' onClick={()=>this.props.history.push('houses/add')}>
         添加
       </Button>
     )
@@ -225,6 +295,13 @@ export default class Houses extends Component{
       onFinish={this.onFinish.bind(this)}
       onFinishFailed={onFinishFailed}
     >
+      <Form.Item {...tailLayout}>
+          <Dropdown overlay={this.batchMenu}>
+            <Button>
+              {this.state.batch} <DownOutlined />
+            </Button>
+          </Dropdown>
+      </Form.Item>
       <Form.Item
         label="楼盘名称"
         name="name"
@@ -248,17 +325,12 @@ export default class Houses extends Component{
           </Dropdown>
       </Form.Item>
 
-      {/* <Form.Item
-        label="开始时间"
-        name="startTime"
-      >
-        <DatePicker onChange={this.onChange.bind(this)} />
-      </Form.Item> */}
 
 
       <Form.Item {...tailLayout}>
         <Button type="primary" htmlType="submit">查询</Button>
       </Form.Item>
+      
     </Form>
     )
 
@@ -268,7 +340,19 @@ export default class Houses extends Component{
         columns={this.columns}
         rowKey='id'
         dataSource={products}
+        rowSelection={rowSelection}
+        pagination={false}
+        //这里是点击行的数据，可以把需要的数据存入state，然后在操作栏调用
+        onRow = {(record) => {
+          return {
+              onClick: () => {
+                 this.setState({
+                    record
+                 })
+              }}
+          }}
       />
+      <Pagination style={{float:"right",marginTop:"10px"}} total={this.state.list.total} defaultCurrent={1} defaultPageSize={10} onChange={this.skip.bind(this)}/>
     </Card>
     )
   }

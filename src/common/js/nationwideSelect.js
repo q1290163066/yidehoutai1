@@ -4,7 +4,7 @@ import { Select } from 'antd';
 const { Option } = Select;
 
 
-export default class AddReceive extends React.Component {
+export default class AddReceive extends Component {
 
     constructor(props) {
 

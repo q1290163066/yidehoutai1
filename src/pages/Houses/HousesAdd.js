@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
-
+// 楼盘基本信息添加
 import NationwideSelect from '../../common/js/nationwideSelect'
-import{Card,Form,Input,Button,Upload,message,Tag } from 'antd'
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import{Card,Form,Input,Button,Upload,message,Tag,Menu,Dropdown } from 'antd'
+import { LoadingOutlined, PlusOutlined,DownOutlined } from '@ant-design/icons';
 import Gmap from '../../common/js/Gmap'
 
 
@@ -18,7 +18,7 @@ const tailLayout = {
 
 // 提交表单且数据验证失败后回调事件
 const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
+  // console.log('Failed:', errorInfo);
 };
 // 上传
 function getBase64(img, callback) {
@@ -44,7 +44,7 @@ let arr=[]
 export default class Detail extends Component{
   constructor(props){
     super()
-    console.log(props)
+    // console.log(props)
     this.state={
       loading:false,
       city:'',
@@ -52,32 +52,102 @@ export default class Detail extends Component{
         name:'',
         masterImg:'',
         address:'',
-        city:'',
-        tags:''
+        city:''
       },
-      salePrice:'',
+      tags:'',
       tag:[],
-      location:''
+      location:'',
+      status:"",
+      statusc:"请选择"
     }
    
   }
   componentWillMount(){
+  //  console.log(this.props.location.state.data)
    
+   if(this.props.location.state){
+    let statusc=""
+    let status=this.props.location.state.data.status
+    if(status=="NORMAL"){
+       statusc="正常"
+     }else if(status=="WAIT_RELEASE"){
+       statusc="待发布"
+     }else{
+       statusc="已删除"
+     }
+    this.setState({
+      form:this.props.location.state.data,
+      tag:this.props.location.state.data.tags,
+      statusc:statusc
+    })
+    arr=this.props.location.state.data.tags
+   }
+    this.batchMenu=(
+      <Menu onClick={this.batchGetMenuClick.bind(this)}>
+      <Menu.Item key="NORMAL">正常</Menu.Item>
+      <Menu.Item key="WAIT_RELEASE" >待发布</Menu.Item>
+      <Menu.Item key="DELETED">已删除 </Menu.Item>
+    </Menu>
+    )
+  }
+  batchGetMenuClick(e) {
+    let statusc=e.key
+    console.log(statusc)
+    if(e.key=="NORMAL"){
+      statusc="正常"
+    }else if(e.key=="WAIT_RELEASE"){
+      statusc="待发布"
+    }else{
+      statusc="已删除"
+    }
+    this.setState({
+      status:e.key,
+      statusc:statusc
+    })
   }
   // 提交表单且数据验证成功后回调事件
   onFinish(values){
     let obj=values
-    obj.city=this.state.city
-    obj.tags=this.state.tag
-    obj.location=this.state.location
-    if(values.masterImg) obj.masterImg=values.masterImg.file.response.data.fileDownloadUri
-    
-    console.log(obj)
-    let url=this.$api.housesInfo.add
-    this.$axios.post(url,obj)
-    .then(res=>{
-      console.log(res)
-    })
+      obj.city=this.state.city
+      obj.tags=this.state.tag
+      obj.location=this.state.location
+      if(values.masterImg && values.masterImg.file) {
+        obj.masterImg=values.masterImg.file.response.data.fileDownloadUri
+      }
+      values.status=this.state.status
+      // console.log(this.props.location.state)
+    if(this.props.location.state){
+      // console.log(11)
+      values.id=this.props.location.state.data.id
+      if(!values.location) values.location=this.props.location.state.data.location
+      if(!values.city) values.city=this.props.location.state.data.city
+      let url=this.$api.housesInfo.compile_all
+      // console.log(values)
+      this.$axios.put(url,values)
+      .then(res=>{
+        if(res.status===200){
+          this.props.history.go(-1)
+          message.success("修改"+res.data.msg);
+        }else{
+          message.error('修改失败');
+        }
+        // console.log(res)
+      })
+    }else{
+      
+      
+      // console.log(values)
+      let url=this.$api.housesInfo.add
+      this.$axios.post(url,obj)
+      .then(res=>{
+        if(res.status===200){
+          this.props.history.go(-1)
+          message.success("添加"+res.data.msg);
+        }else{
+          message.error('添加失败');
+        }
+      })
+    }
    
   }
   fn(val){
@@ -86,15 +156,16 @@ export default class Detail extends Component{
     })
   }
   handleChange = info => {
+    // console.log(info)
     if (info.file.status === 'uploading') {
       this.setState({ loading: true });
       return;
     }
     if (info.file.status === 'done') {
-      getBase64(info.file.originFileObj, resourcePath =>
+      getBase64(info.file.originFileObj, masterImg =>
         this.setState({
           form:{
-            resourcePath:info.file.response.data.fileDownloadUri
+            masterImg:info.file.response.data.fileDownloadUri
           },
           loading: false,
         })
@@ -102,18 +173,18 @@ export default class Detail extends Component{
     }
   }
   addTag(){
-    if(this.state.salePrice){
-      let salePrice=this.state.salePrice
-      arr.push(salePrice)
+    if(this.state.tags){
+      let tags=this.state.tags
+      arr.push(tags)
       this.setState({
-        salePrice:'',
+        tags:'',
         tag:arr
       })
     }
   }
   change(e){
     this.setState({
-      salePrice:e.target.value
+      tags:e.target.value
     })
   }
   fn1(val){
@@ -126,8 +197,17 @@ export default class Detail extends Component{
       location:String(arr)
     })
   }
-
+  status(status){
+    if(status==="NORMAL"){
+      return "1"
+    }else if(status==="WAIT_RELEASE"){
+      return "2"
+    }else{
+      return "3"
+    }
+  }
   render(){
+    let token=("Bearer "+localStorage.getItem("elementToken"))
     const uploadButton = (
       <div>
         {this.state.loading ? <LoadingOutlined /> : <PlusOutlined />}
@@ -135,6 +215,7 @@ export default class Detail extends Component{
       </div>
     )
     const  product= this.state.form
+    // console.log(product)
     return(
       
       <Card  style={{padding:'40px'}}>
@@ -148,6 +229,7 @@ export default class Detail extends Component{
           <Form.Item
             label="楼盘名称"
             name="name"
+            initialValue={product.name}
           >
             <Input />
           </Form.Item>
@@ -155,6 +237,7 @@ export default class Detail extends Component{
           <Form.Item
             label="楼盘主图"
             name="masterImg"
+            initialValue={product.masterImg}
           >
             <Upload
               name="file"
@@ -164,14 +247,16 @@ export default class Detail extends Component{
               action= {this.$api.upload}
               beforeUpload={beforeUpload}
               onChange={this.handleChange}
+              headers={{Authorization:token}}
             >
-              {product.resourcePath ? <img src={product.resourcePath} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
+              {product.masterImg ? <img src={product.masterImg} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
             </Upload>
           </Form.Item>
           
           <Form.Item
             label="楼盘所属城市"
             name="city"
+            initialValue={product.city}
           >
             <NationwideSelect fn={this.fn.bind(this)}></NationwideSelect>
           </Form.Item>
@@ -179,6 +264,7 @@ export default class Detail extends Component{
           <Form.Item
             label="楼盘详细地址"
             name="address"
+            initialValue={product.address}
           >
             <Input />
           </Form.Item>
@@ -186,6 +272,7 @@ export default class Detail extends Component{
           <Form.Item
             label="楼盘定位"
             name="location"
+            initialValue={product.location}
           >
             <Gmap fn1={this.fn1.bind(this)}></Gmap>
           </Form.Item>
@@ -193,15 +280,16 @@ export default class Detail extends Component{
           <Form.Item
             label="销售价格"
             name="salePrice"
+            initialValue={product.salePrice}
           >
             <Input />
           </Form.Item>
 
           <Form.Item
             label="楼盘标签"
-            name="salePrice"
+            name="tags"
           >
-            <Input value={this.state.salePrice} onChange={this.change.bind(this)} />
+            <Input value={this.state.tags} onChange={this.change.bind(this)} />
             <Button type="primary" onClick={this.addTag.bind(this)}>添加标签</Button>
             <div>
               {
@@ -215,13 +303,14 @@ export default class Detail extends Component{
           <Form.Item
             label="佣金比例"
             name="commissionRisen"
+            initialValue={product.commissionRisen}
           >
-            <Input placeholder="例如:5.6"/>%
+            <Input placeholder="例如:5.6"/>
           </Form.Item>
-
           <Form.Item
             label="佣金规则描述"
             name="commissionRule"
+            initialValue={product.commissionRule}
           >
             <Input />
           </Form.Item>
@@ -229,13 +318,15 @@ export default class Detail extends Component{
           <Form.Item
             label="邀约奖励"
             name="inviteReward"
+            initialValue={product.inviteReward}
           >
-            <Input placeholder="例如:5.6"/>%
+            <Input placeholder="例如:5.6"/>
           </Form.Item>
           
           <Form.Item
             label="邀约奖励描述"
             name="inviteRewardRule"
+            initialValue={product.inviteRewardRule}
           >
             <Input />
           </Form.Item>
@@ -243,6 +334,7 @@ export default class Detail extends Component{
           <Form.Item
             label="优惠信息"
             name="discountInfo"
+            initialValue={product.discountInfo}
           >
             <Input />
           </Form.Item>
@@ -250,14 +342,21 @@ export default class Detail extends Component{
           <Form.Item
             label="联系电话"
             name="telephone"
+            initialValue={product.telephone}
           >
             <Input />
           </Form.Item>
           <Form.Item
             label="楼盘状态"
             name="status"
+            initialValue={product.status}
           >
-            <Input placeholder="1:正常,2:未发布,3:删除" />
+            
+            <Dropdown overlay={this.batchMenu}>
+              <Button>
+                {this.state.statusc}<DownOutlined />
+              </Button>
+            </Dropdown>
           </Form.Item>
 
           <Form.Item {...tailLayout}>
@@ -266,6 +365,7 @@ export default class Detail extends Component{
           </Form.Item>
         </Form>
       </Card>
+
     )
   }
 }

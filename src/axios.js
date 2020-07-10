@@ -1,5 +1,4 @@
 import axios from 'axios'
-
 const http=axios.create({
     baseURL:'/sys',
     transformResponse(data){
@@ -30,12 +29,15 @@ const http=axios.create({
 // 请求拦截
 http.interceptors.request.use(config=>{
     if(localStorage.elementToken){
-        config.headers.Authorization=localStorage.elementToken
+        config.headers.Authorization="Bearer "+localStorage.elementToken
     }
     return config
 })
 // 响应拦截
 http.interceptors.response.use(res=>{
+    if(res.data.code==="401"){
+        window.location.href = '/login';
+    }
     return res
 })
 export default http

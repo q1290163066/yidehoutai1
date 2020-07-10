@@ -11,6 +11,8 @@ Component.prototype.$api=api;
 Component.prototype.$axios=axios
 
 
+
+
 ReactDOM.render(
     <App />,
   document.getElementById('root')

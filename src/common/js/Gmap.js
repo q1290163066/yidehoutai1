@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Card, message,Input } from 'antd';
+import { message} from 'antd';
 
 export default class Gmap extends Component{
     componentDidMount() {
